@@ -35,66 +35,32 @@ intrinsic_global = registry.register_global
 # register_number_classes(intrinsic_global)
 
 
-@intrinsic
-class Ocl_get_global_id(ConcreteTemplate):
-    key = dppy.get_global_id
-    cases = [signature(types.intp, types.uint32)]
+def register(function, args):
+    base = ConcreteTemplate
+    name = f"Ocl_{function.__name__}"
+
+    if isinstance(args, list):
+        cases = [signature(*a) for a in args]
+    else:
+        cases = [signature(*args)]
+
+    dct = {"key": function, "cases": cases}
+    cls = type(base)(name, (base,), dct)
+
+    globals()[name] = intrinsic(cls)
+    intrinsic_global(function, types.Function(cls))
 
 
-@intrinsic
-class Ocl_get_local_id(ConcreteTemplate):
-    key = dppy.get_local_id
-    cases = [signature(types.intp, types.uint32)]
-
-
-@intrinsic
-class Ocl_get_group_id(ConcreteTemplate):
-    key = dppy.get_group_id
-    cases = [signature(types.intp, types.uint32)]
-
-
-@intrinsic
-class Ocl_get_num_groups(ConcreteTemplate):
-    key = dppy.get_num_groups
-    cases = [signature(types.intp, types.uint32)]
-
-
-@intrinsic
-class Ocl_get_work_dim(ConcreteTemplate):
-    key = dppy.get_work_dim
-    cases = [signature(types.uint32)]
-
-
-@intrinsic
-class Ocl_get_global_size(ConcreteTemplate):
-    key = dppy.get_global_size
-    cases = [signature(types.intp, types.uint32)]
-
-
-@intrinsic
-class Ocl_get_local_size(ConcreteTemplate):
-    key = dppy.get_local_size
-    cases = [signature(types.intp, types.uint32)]
-
-
-@intrinsic
-class Ocl_barrier(ConcreteTemplate):
-    key = dppy.barrier
-    cases = [signature(types.void, types.uint32), signature(types.void)]
-
-
-@intrinsic
-class Ocl_mem_fence(ConcreteTemplate):
-    key = dppy.mem_fence
-    cases = [signature(types.void, types.uint32)]
-
-
-@intrinsic
-class Ocl_sub_group_barrier(ConcreteTemplate):
-    key = dppy.sub_group_barrier
-
-    cases = [signature(types.void)]
-
+register(dppy.get_global_id, (types.intp, types.uint32))
+register(dppy.get_local_id, (types.intp, types.uint32))
+register(dppy.get_group_id, (types.intp, types.uint32))
+register(dppy.get_num_groups, (types.intp, types.uint32))
+register(dppy.get_work_dim, (types.intp, types.uint32))
+register(dppy.get_global_size, (types.intp, types.uint32))
+register(dppy.get_local_size, (types.intp, types.uint32))
+register(dppy.barrier, [(types.intp, types.uint32), (types.void,)])
+register(dppy.mem_fence, (types.intp, types.uint32))
+register(dppy.sub_group_barrier, (types.void,))
 
 # dppy.atomic submodule -------------------------------------------------------
 
@@ -237,34 +203,34 @@ class OclModuleTemplate(AttributeTemplate):
     key = types.Module(dppy)
 
     def resolve_get_global_id(self, mod):
-        return types.Function(Ocl_get_global_id)
+        return types.Function(globals()["Ocl_get_global_id"])
 
     def resolve_get_local_id(self, mod):
-        return types.Function(Ocl_get_local_id)
+        return types.Function(globals()["Ocl_get_local_id"])
 
     def resolve_get_global_size(self, mod):
-        return types.Function(Ocl_get_global_size)
+        return types.Function(globals()["Ocl_get_global_size"])
 
     def resolve_get_local_size(self, mod):
-        return types.Function(Ocl_get_local_size)
+        return types.Function(globals()["Ocl_get_local_size"])
 
     def resolve_get_num_groups(self, mod):
-        return types.Function(Ocl_get_num_groups)
+        return types.Function(globals()["Ocl_get_num_groups"])
 
     def resolve_get_work_dim(self, mod):
-        return types.Function(Ocl_get_work_dim)
+        return types.Function(globals()["Ocl_get_work_dim"])
 
     def resolve_get_group_id(self, mod):
-        return types.Function(Ocl_get_group_id)
+        return types.Function(globals()["Ocl_get_group_id"])
 
     def resolve_barrier(self, mod):
-        return types.Function(Ocl_barrier)
+        return types.Function(globals()["Ocl_barrier"])
 
     def resolve_mem_fence(self, mod):
-        return types.Function(Ocl_mem_fence)
+        return types.Function(globals()["Ocl_mem_fence"])
 
     def resolve_sub_group_barrier(self, mod):
-        return types.Function(Ocl_sub_group_barrier)
+        return types.Function(globals()["Ocl_sub_group_barrier"])
 
     def resolve_atomic(self, mod):
         return types.Module(dppy.atomic)
